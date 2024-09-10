@@ -1,0 +1,109 @@
+/************************************************************************************************
+* Kelompok 1                                                                                    *
+* Feri Gunawan 241402013                                                                        *           
+* Muhammad Faiz Pasaribu 241402118                                                                 *
+* Nahya Syakira Ketaren 241402121                                                               *
+* Nama file: A1_241402013_01.c                                                                  *
+* Tugas pertama untuk perkelompok                                                               *
+* Program untuk menghitung sudah berapa lama hidup hingga saat ini                              * 
+************************************************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+
+// Fungsi untuk memeriksa apakah tahun yang diinput adalah kabisat
+int isKabisat(int tahun) {
+    if (tahun % 400 == 0 || (tahun % 100 != 0 && tahun % 4 == 0)) {
+        return 1;
+    }
+    return 0;
+}
+
+// Fungsi untuk mengetahui jumlah hari di bulan tertentu
+int hariDalamBulan(int bulan, int tahun) {
+    int hariPerBulan[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (bulan == 2 && isKabisat(tahun)) {
+        return 29; 
+    }
+    return hariPerBulan[bulan - 1]; 
+}
+
+// Fungsi untuk menghitung total hari antara dua tanggal
+int hariAntaraTanggal(int tglLahir, int blnLahir, int thnLahir, int *tahun, int *bulan, int *hari) {
+    time_t t = time(NULL);
+    struct tm *sekarang = localtime(&t);
+    int tglSekarang = sekarang->tm_mday;
+    int blnSekarang = sekarang->tm_mon + 1; 
+    int thnSekarang = sekarang->tm_year + 1900;
+
+    *tahun = thnSekarang - thnLahir;
+    *bulan = blnSekarang - blnLahir;
+    *hari = tglSekarang - tglLahir;
+
+    // Jika hari sekarang lebih kecil dari hari lahir, pinjam satu bulan
+    if (*hari < 0) {
+        *bulan -= 1;
+        *hari += hariDalamBulan((blnSekarang == 1 ? 12 : blnSekarang - 1), thnSekarang); // Hari dari bulan sebelumnya
+    }
+
+    // Jika bulan sekarang lebih kecil dari bulan lahir, pinjam satu tahun
+    if (*bulan < 0) {
+        *tahun -= 1;
+        *bulan += 12;
+    }
+
+    //jika tahun, bulan, dan hari lahir sama dengan sekarang
+    if (thnLahir == thnSekarang && blnLahir == blnSekarang) {
+        return *hari ++ ;  // Total hari hanya perbedaan hari, ditambah 1 hari untuk hari lahir
+    }
+
+    // Menhitung total hari sejak tanggal lahir hingga sekarang
+    int totalHari = 0;
+
+    // Menambahkan hari dari tahun lahir hingga tahun sekarang
+    for (int tahunIni = thnLahir; tahunIni <= thnSekarang; tahunIni++) {
+        int awalBulan = (tahunIni == thnLahir) ? blnLahir : 1;  // Mulai dari bulan lahir di tahun lahir
+        int akhirBulan = (tahunIni == thnSekarang) ? blnSekarang : 12;   // Hingga bulan sekarang di tahun sekarang
+
+        for (int bulanIni = awalBulan; bulanIni <= akhirBulan; bulanIni++) {
+            if (tahunIni == thnLahir && bulanIni == blnLahir) {
+                totalHari += hariDalamBulan(bulanIni, tahunIni) - tglLahir;  // Sisa hari di bulan lahir
+            } else if (tahunIni == thnSekarang && bulanIni == blnSekarang) {
+                totalHari += tglSekarang;  // Tambahkan hari hingga hari sekarang
+            } else {
+                totalHari += hariDalamBulan(bulanIni, tahunIni);  // Tambahkan semua hari di bulan lain
+            }
+        }
+    }
+
+    return totalHari;
+}
+
+int main() {
+    int tglLahir, blnLahir, thnLahir;
+    int tahun, bulan, hari;
+
+    printf("Masukkan tanggal lahir (dd mm yyyy): ");
+    scanf("%d %d %d", &tglLahir, &blnLahir, &thnLahir);
+
+    // Mengambil tanggal saat ini
+    time_t t = time(NULL);
+    struct tm *sekarang = localtime(&t);
+    int tglSekarang = sekarang->tm_mday;
+    int blnSekarang = sekarang->tm_mon + 1;
+    int thnSekarang = sekarang->tm_year + 1900;
+
+    // Pengecekan apakah tanggal lahir di masa depan
+    if (thnLahir > thnSekarang || (thnLahir == thnSekarang && blnLahir > blnSekarang) || (thnLahir == thnSekarang && blnLahir == blnSekarang && tglLahir > tglSekarang)) {
+        printf("Tidak bisa memprediksi masa depan\n");
+    } else {
+        // Menghitung total hari hidup dan juga berapa tahun, bulan, dan hari
+        int totalHari = hariAntaraTanggal(tglLahir, blnLahir, thnLahir, &tahun, &bulan, &hari);
+
+        // Menampilkan hasil dalam format tahun, bulan, hari, serta total hari
+        printf("Anda telah hidup selama %d tahun, %d bulan, dan %d hari\n", tahun, bulan, hari);
+        printf("Total hari hidup: %d hari\n", totalHari);
+    }
+
+    return 0;
+}
