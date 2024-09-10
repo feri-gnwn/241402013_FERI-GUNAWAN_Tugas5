@@ -1,0 +1,101 @@
+/************************************************************************************************
+* Kelompok 1                                                                                    *
+* Feri Gunawan 241402013                                                                        *           
+* Muhammad Faiz Pasaribu 241402                                                                 *
+* Nahya Syakira Ketaren 241402121                                                               *
+* Nama file: A1_241402013_01.c                                                                  *
+* Tugas pertama untuk perkelompok                                                               *
+* Program untuk menghitung sudah berapa lama hidup hingga saat ini                              * 
+************************************************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+
+int isKabisat(int year) {
+    if (year % 400 == 0 || (year % 100 != 0 && year % 4 == 0)) {
+        return 1;
+    }
+    return 0;
+}
+
+int daysInMonth(int month, int year) {
+    int daysPerMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (month == 2 && isKabisat(year)) {
+        return 29;  // Februari dalam tahun kabisat
+    }
+    return daysPerMonth[month - 1];  // Jumlah hari di bulan lain
+}
+
+int daysBetweenDates(int bDay, int bMonth, int bYear, int *years, int *months, int *days) {
+    time_t t = time(NULL);
+    struct tm *today = localtime(&t);
+    int cDay = today->tm_mday;
+    int cMonth = today->tm_mon + 1; // Bulan dalam struct tm mulai dari 0 (Januari = 0)
+    int cYear = today->tm_year + 1900;
+
+    *years = cYear - bYear;
+    *months = cMonth - bMonth;
+    *days = cDay - bDay;
+
+    // Jika hari sekarang lebih kecil dari hari lahir, pinjam satu bulan
+    if (*days < 0) {
+        *months -= 1;
+        *days += daysInMonth((cMonth == 1 ? 12 : cMonth - 1), cYear); // Hari dari bulan sebelumnya
+    }
+
+    // Jika bulan sekarang lebih kecil dari bulan lahir, pinjam satu tahun
+    if (*months < 0) {
+        *years -= 1;
+        *months += 12;
+    }
+
+    // Hitung jumlah total hari sejak tanggal lahir hingga sekarang
+    int totalDays = 0;
+
+    // Tambahkan jumlah hari dari tahun kelahiran hingga tahun sekarang
+    for (int year = bYear; year <= cYear; year++) {
+        int startMonth = (year == bYear) ? bMonth : 1;  // Mulai dari bulan lahir di tahun kelahiran
+        int endMonth = (year == cYear) ? cMonth : 12;   // Hingga bulan sekarang di tahun sekarang
+
+        for (int month = startMonth; month <= endMonth; month++) {
+            if (year == bYear && month == bMonth) {
+                totalDays += daysInMonth(month, year) - bDay;  // Sisa hari bulan lahir
+            } else if (year == cYear && month == cMonth) {
+                totalDays += cDay;  // menambahkan hari hingga hari sekarang di bulan sekarang
+            } else {
+                totalDays += daysInMonth(month, year);  // menambahkan semua hari di bulan lainnya
+            }
+        }
+    }
+
+    return totalDays;
+}
+
+int main() {
+    int bDay, bMonth, bYear;
+    int years, months, days;
+
+    printf("Masukkan tanggal lahir (dd mm yyyy): ");
+    scanf("%d %d %d", &bDay, &bMonth, &bYear);
+
+    // Mengambil tanggal saat ini
+    time_t t = time(NULL);
+    struct tm *today = localtime(&t);
+    int cDay = today->tm_mday;
+    int cMonth = today->tm_mon + 1;
+    int cYear = today->tm_year + 1900;
+
+    // Pengecekan apakah tanggal lahir dimasa depan
+    if (bYear > cYear || (bYear == cYear && bMonth > cMonth) || (bYear == cYear && bMonth == cMonth && bDay > cDay)) {
+        printf("Tidak bisa memprediksi masa depan\n");
+    } else {
+        // Menghitung total hari hidup dan juga berapa tahun, bulan, dan hari
+        int totalDays = daysBetweenDates(bDay, bMonth, bYear, &years, &months, &days);
+
+        // menampilkan hasil dalam format tahun, bulan, hari, serta total hari secara keseluruhan
+        printf("Anda telah hidup selama %d tahun, %d bulan, dan %d hari\n", years, months, days);
+        printf("Total hari hidup: %d hari\n", totalDays);
+    }
+
+    return 0;
+}
